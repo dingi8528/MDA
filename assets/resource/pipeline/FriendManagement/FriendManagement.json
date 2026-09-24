@@ -1,12 +1,6 @@
 {
     "FriendManagementMain": {
         "desc": "好友管理入口",
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "FriendManagementEntryFlow",
             "[JumpBack]CommonReturnHall"

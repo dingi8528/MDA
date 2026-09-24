@@ -1,12 +1,6 @@
 {
     "RedDotClearMain": {
         "desc": "红点清除入口",
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "RedDotClearEntryFlow",
             "[JumpBack]CommonReturnHall"

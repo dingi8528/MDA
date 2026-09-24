@@ -1,11 +1,5 @@
 {
     "CashShopMain": {
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "HallEnterCashShop",
             "[JumpBack]CommonReturnHall"

@@ -17,13 +17,12 @@ Maa Doro Assistant
   <img alt="Go" style="display:inline-block" src="https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white">
   <img alt="MaaFramework" style="display:inline-block" src="https://img.shields.io/badge/MaaFramework-%2300BFFF">
   <img alt="platform" style="display:inline-block" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blueviolet">
-  <img alt="license" style="display:inline-block" src="https://img.shields.io/github/license/1204244136/MDA">
+  <img alt="license" style="display:inline-block" src="https://img.shields.io/github/license/dingi8528/MDA">
   <br>
-  <img alt="release" style="display:inline-block" src="https://img.shields.io/github/v/release/1204244136/MDA">
-  <img alt="commit" style="display:inline-block" src="https://img.shields.io/github/commit-activity/m/1204244136/MDA">
-  <img alt="stars" style="display:inline-block" src="https://img.shields.io/github/stars/1204244136/MDA?style=social">
-  <img alt="downloads" style="display:inline-block" src="https://img.shields.io/github/downloads/1204244136/MDA/total?style=social">
-  <a href="https://mirrorchyan.com/zh/projects?rid=MDA&os=windows&arch=x64&channel=stable&source=mdagh-badge" target="_blank"><img alt="mirrorc" style="display:inline-block" src="https://img.shields.io/badge/Mirror%E9%85%B1-%239af3f6?logo=countingworkspro&logoColor=4f46e5"></a>
+  <img alt="release" style="display:inline-block" src="https://img.shields.io/github/v/release/dingi8528/MDA">
+  <img alt="commit" style="display:inline-block" src="https://img.shields.io/github/commit-activity/m/dingi8528/MDA">
+  <img alt="stars" style="display:inline-block" src="https://img.shields.io/github/stars/dingi8528/MDA?style=social">
+  <img alt="downloads" style="display:inline-block" src="https://img.shields.io/github/downloads/dingi8528/MDA/total?style=social">
 </p>
 
 MDA 是一款基于 [MaaFramework](https://github.com/MaaXYZ/MaaFramework) 开发的游戏自动化辅助工具，由 [DoroHelper](https://github.com/1204244136/DoroHelper) 重写而来。它可以帮你自动完成游戏中的日常任务与活动内容，省时省力、解放双手。
@@ -65,9 +64,6 @@ MDA 内置了多种任务，覆盖日常、活动与实用工具，全部可以�
 - 🗺️ **自动推图**：在地图上自动点击怪物战斗、触发机关，推进主线关卡。
 - 🔴 **清除红点**：自动清除各界面上的红点提醒。
 - 👥 **好友管理**：删除长期未登录好友、接受全部好友申请。
-- 📊 **额度显示**：显示今日已使用和剩余的运行额度，本任务不消耗额度。
-
-> ⚠️ **高级任务**（自动推图、洗词条、自定义爆裂）：当没有可用的专项额度时，按 **5 倍**额度消耗。
 
 ---
 
@@ -181,11 +177,11 @@ MDA 的界面支持中文、英文等多种语言，但**脚本的功能目前�
 
 ## ⭐ Star 历史
 
-<a href="https://www.star-history.com/#1204244136/MDA&Date">
+<a href="https://www.star-history.com/#dingi8528/MDA&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=1204244136/MDA&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=1204244136/MDA&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=1204244136/MDA&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=dingi8528/MDA&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=dingi8528/MDA&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=dingi8528/MDA&type=Date" />
   </picture>
 </a>
 

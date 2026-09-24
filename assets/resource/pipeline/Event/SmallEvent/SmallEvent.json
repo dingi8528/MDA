@@ -1,12 +1,6 @@
 {
     "SmallEventMain": {
         "desc": "小活动",
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "SmallEventHallFlow",
             "[JumpBack]CommonReturnHall"

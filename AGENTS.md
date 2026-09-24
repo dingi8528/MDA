@@ -35,7 +35,8 @@
 
 - 与用户对话、生成文件内容、生成 commit 信息时优先使用中文。
 - commit 后不要自动 push；由用户决定何时推送。
-- commit 信息应使用中文并遵守 Conventional Commits 风格。
+- commit 信息遵守 Conventional Commits 风格；会员相关改动（包括同步上游后移除会员功能）的提交标题和正文使用英文，其他提交优先使用中文。
+- 后续同步上游及打包版时，按 [上游同步与打包版维护流程](docs/upstream-sync-packaging.md) 执行；打包版的本地版本和更新来源设置必须保留。
 - commit scope 涉及具体任务时，使用任务本身的正式名称并保持原有大小写和连续拼写（例如 `SoloRaid`，不要写成 `solo-raid`）。
 - commit scope 涉及活动主题时，使用对应任务的正式名称 `LargeEvent` 或 `SmallEvent`，不要使用具体主题名（例如 `ProjectMatis`）。
 - 编辑 i18 本地化文件时，保持与参考文件一致的排序；界面任务顺序由 `assets/interface.json` 的 `import` 顺序决定（客户端按 import 逐个追加任务再按 `group` 归桶，桶内不二次排序），调整任务显示顺序时改 `import`，不要改 `tasks/*.json` 的书写顺序。

@@ -1,11 +1,5 @@
 {
     "ArenaMain": {
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "[JumpBack]ArenaClaimSpecialReward",
             "ArkEnterArena",

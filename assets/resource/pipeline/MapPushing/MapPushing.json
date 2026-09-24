@@ -1,12 +1,6 @@
 {
     "MapPushingFlow": {
         "desc": "推图流程",
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "[JumpBack]BattleEntryFlow",
             "[JumpBack]CommonSkipPlot",

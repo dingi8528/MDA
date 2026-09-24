@@ -21,12 +21,12 @@
 
 以下来自仓库 CI 配置，非推断：
 
-| 环节     | 事实                                                            | 证据                                              |
-| -------- | --------------------------------------------------------------- | ------------------------------------------------- |
-| 触发条件 | 改动 `assets/**` 即触发 install 构建                            | `.github/workflows/install.yml:18`                |
-| 打包方式 | `assets/resource` 与 `assets/tasks` 一起 copy 进同一 `install/` | `tools/install.py:73-90`（`install_resource()`）  |
-| 发布产物 | 整个 `install/` 目录打成一个 zip                                | `install.yml:256-268`                             |
-| 分发渠道 | MirrorChyan 以整包上传（`filetype: latest-release`）            | `.github/workflows/mirrorchyan_release.yml:23-27` |
+| 环节     | 事实                                                            | 证据                                             |
+| -------- | --------------------------------------------------------------- | ------------------------------------------------ |
+| 触发条件 | 改动 `assets/**` 即触发 install 构建                            | `.github/workflows/install.yml:18`               |
+| 打包方式 | `assets/resource` 与 `assets/tasks` 一起 copy 进同一 `install/` | `tools/install.py:73-90`（`install_resource()`） |
+| 发布产物 | 整个 `install/` 目录打成一个 zip                                | `install.yml:256-268`                            |
+| 分发渠道 | GitHub Release 附带整包 ZIP                                     | `.github/workflows/install.yml`                  |
 
 **关键结论**：`resource` 与 `tasks` **永远同版本、同一次更新**，
 不存在「新 tasks 配旧 resource」或反之的错配可能。

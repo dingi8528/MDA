@@ -1,11 +1,5 @@
 {
     "InterceptionMain": {
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "ArkEnterInterception",
             "[JumpBack]CommonEnterArk"

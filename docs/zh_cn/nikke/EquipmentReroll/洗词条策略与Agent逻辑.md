@@ -1169,7 +1169,7 @@ EquipmentRerollMain
 | `Character`（默认） | 洗角色词条 | 9 个效果配额 select（`EquipmentRerollQuotaElementalDamage` 等） | `attach.mode = "character"`                                                                                               |
 | `Single`            | 洗单件词条 | `EquipmentRerollSinglePart`、`EquipmentRerollSingleWant1/2/3`   | `attach.mode = "single"`；`EquipmentRerollScanDetailsPageEntered.next → EquipmentRerollSingleScanRoute`（只扫选定那一件） |
 
-两种模式共用入口 `EquipmentRerollMain`（RuntimeQuotaCheck 计费）与扫描流程；
+两种模式共用入口 `EquipmentRerollMain` 与扫描流程；
 `EquipmentRerollAfterMaterialCheck` 读取承载点 `attach.mode` 分流到 `EquipmentRerollDecide`（角色）或
 `EquipmentRerollSingleDecide`（单件）。
 
@@ -1237,30 +1237,22 @@ EquipmentRerollMain
 
 ### 9.6 Pipeline / Go 节点对应（新增）
 
-| 节点                                                                                 | 职责                                                                                                                | 组件                                                                 |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `EquipmentRerollMain`                                                                | 共用入口（RuntimeQuotaCheck 计费）→ `EquipmentRerollFlow`（两种模式同一条编排）                                     | membership `RuntimeQuotaCheckAction`、任务选项 `EquipmentRerollMode` |
-| `EquipmentRerollSingleScanRoute`                                                     | 单件扫描起点：跳过其余三件，直接打开 `attach.part` 选定的那一件详情                                                 | 新增 `EquipmentRerollSingleScanRouteAction`                          |
-| `EquipmentRerollSingleDecide`                                                        | 判断选定部位是否达标：达标→摘要/结束；目标不可达→告知用户并结束；否则打开该部位详情（重设 AfterOpen 锚点→LockGate） | 新增 `EquipmentRerollSingleDecideAction`                             |
-| `EquipmentRerollSingleReturnToDecide`                                                | 单件一次效果变更后回单件决策（不再重新扫描）                                                                        | -                                                                    |
-| `EquipmentRerollAfterMaterialCheck`                                                  | 扫描完成后路由：独立扫描→摘要；角色（mode=character）→Decide；单件（mode=single）→SingleDecide                      | `EquipmentRerollAfterMaterialCheckAction`（读 `attach.mode` 分流）   |
-| `EquipmentRerollLockNeed` / `KeepLockCheck`                                          | 配置承载点 + 锁定判定（单件模式：`singleDesiredLockSlot`）                                                          | `EquipmentRerollLockCheckRecognition`（`lockCheckSingle` 分支）      |
-| `EquipmentRerollResultPage`                                                          | 结果页决策（单件模式：`DecideResultPageSingle`）                                                                    | `EquipmentRerollResultDecideRecognition`（`decideSingle` 分支）      |
-| `EquipmentRerollAfterAccept`                                                         | 接受后路由（单件模式→`EquipmentRerollSingleReturnToDecide`）                                                        | `EquipmentRerollAfterAcceptRouteAction`（读 `attach.mode`）          |
-| `EquipmentRerollLockSelectMaterial` / `LockDone` / `LockRouteSlot` / `KeepLockRoute` | 材料选择 / 二次锁 / 待锁槽路由（统一经 `desiredLockSlotForConfig` 按模式回退）                                      | 复用，内部改用模式感知的 `desiredLockSlotForCurrentMode`             |
+| 节点                                                                                 | 职责                                                                                                                | 组件                                                               |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `EquipmentRerollMain`                                                                | 共用入口 → `EquipmentRerollFlow`（两种模式同一条编排）                                                              | 任务选项 `EquipmentRerollMode`                                     |
+| `EquipmentRerollSingleScanRoute`                                                     | 单件扫描起点：跳过其余三件，直接打开 `attach.part` 选定的那一件详情                                                 | 新增 `EquipmentRerollSingleScanRouteAction`                        |
+| `EquipmentRerollSingleDecide`                                                        | 判断选定部位是否达标：达标→摘要/结束；目标不可达→告知用户并结束；否则打开该部位详情（重设 AfterOpen 锚点→LockGate） | 新增 `EquipmentRerollSingleDecideAction`                           |
+| `EquipmentRerollSingleReturnToDecide`                                                | 单件一次效果变更后回单件决策（不再重新扫描）                                                                        | -                                                                  |
+| `EquipmentRerollAfterMaterialCheck`                                                  | 扫描完成后路由：独立扫描→摘要；角色（mode=character）→Decide；单件（mode=single）→SingleDecide                      | `EquipmentRerollAfterMaterialCheckAction`（读 `attach.mode` 分流） |
+| `EquipmentRerollLockNeed` / `KeepLockCheck`                                          | 配置承载点 + 锁定判定（单件模式：`singleDesiredLockSlot`）                                                          | `EquipmentRerollLockCheckRecognition`（`lockCheckSingle` 分支）    |
+| `EquipmentRerollResultPage`                                                          | 结果页决策（单件模式：`DecideResultPageSingle`）                                                                    | `EquipmentRerollResultDecideRecognition`（`decideSingle` 分支）    |
+| `EquipmentRerollAfterAccept`                                                         | 接受后路由（单件模式→`EquipmentRerollSingleReturnToDecide`）                                                        | `EquipmentRerollAfterAcceptRouteAction`（读 `attach.mode`）        |
+| `EquipmentRerollLockSelectMaterial` / `LockDone` / `LockRouteSlot` / `KeepLockRoute` | 材料选择 / 二次锁 / 待锁槽路由（统一经 `desiredLockSlotForConfig` 按模式回退）                                      | 复用，内部改用模式感知的 `desiredLockSlotForCurrentMode`           |
 
 > **复用原则**：除上述 Go 组件增加模式分支、以及新增一个扫描起点路由动作外，单件模式**不新增**打开详情、
 > 锁定页、效果变更、结果按钮等原子化节点；所有识别参数仍只维护在 Pipeline，Go 不硬编码任何识别 ROI。
 
-### 9.7 会员配额
-
-两种模式共用入口 `EquipmentRerollMain`，属于**高级任务**（`taskersink/membership/multiplier.go`
-的 `taskTierByEntry` 中 `taskTierHigh`）：没有可用专项额度时（非会员，或专项额度已用尽）按 5 倍额度消耗、
-配额路由走专项优先（`quotaRouteSpecialThenRegular`）。单件模式不额外注册入口，直接复用角色模式的计费口径。
-高级任务的清单由 `HighConsumptionEntries()` 导出，`task_description_test.go` 据此校验这些任务的界面描述
-里写明了 5 倍额度消耗，新增高级任务时同步补描述即可，否则测试会失败。
-
-### 9.8 数据示例（单件，期望订制模块基线）
+### 9.7 数据示例（单件，期望订制模块基线）
 
 与 §4.4 表同口径的“单件”直观基线（无初始锁定，目标达成即停；仅示意量级，未逐样本枚举）：
 

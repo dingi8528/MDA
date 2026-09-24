@@ -1,11 +1,5 @@
 {
     "SimulationRoomMain": {
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "SimulationRoomEnterMain",
             "[JumpBack]CommonEnterArk"

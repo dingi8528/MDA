@@ -77,7 +77,6 @@ footer = """
 **绝大部分用户请下载 MDA-win-x86_64-vx.x.x.zip，没找到的请点 show all x assets**
 {%- endif %}
 
-[已有 Mirror酱 CDK？点击前往高速下载](https://mirrorchyan.com/zh/projects?rid=MDA&source=mdagh-release)
 """
 
 [git]

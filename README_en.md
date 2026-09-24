@@ -17,13 +17,12 @@ Maa Doro Assistant
   <img alt="Go" style="display:inline-block" src="https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white">
   <img alt="MaaFramework" style="display:inline-block" src="https://img.shields.io/badge/MaaFramework-%2300BFFF">
   <img alt="platform" style="display:inline-block" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blueviolet">
-  <img alt="license" style="display:inline-block" src="https://img.shields.io/github/license/1204244136/MDA">
+  <img alt="license" style="display:inline-block" src="https://img.shields.io/github/license/dingi8528/MDA">
   <br>
-  <img alt="release" style="display:inline-block" src="https://img.shields.io/github/v/release/1204244136/MDA">
-  <img alt="commit" style="display:inline-block" src="https://img.shields.io/github/commit-activity/m/1204244136/MDA">
-  <img alt="stars" style="display:inline-block" src="https://img.shields.io/github/stars/1204244136/MDA?style=social">
-  <img alt="downloads" style="display:inline-block" src="https://img.shields.io/github/downloads/1204244136/MDA/total?style=social">
-  <a href="https://mirrorchyan.com/zh/projects?rid=MDA&os=windows&arch=x64&channel=stable&source=mdagh-badge-en" target="_blank"><img alt="mirrorc" style="display:inline-block" src="https://img.shields.io/badge/Mirror%E9%85%B1-%239af3f6?logo=countingworkspro&logoColor=4f46e5"></a>
+  <img alt="release" style="display:inline-block" src="https://img.shields.io/github/v/release/dingi8528/MDA">
+  <img alt="commit" style="display:inline-block" src="https://img.shields.io/github/commit-activity/m/dingi8528/MDA">
+  <img alt="stars" style="display:inline-block" src="https://img.shields.io/github/stars/dingi8528/MDA?style=social">
+  <img alt="downloads" style="display:inline-block" src="https://img.shields.io/github/downloads/dingi8528/MDA/total?style=social">
 </p>
 
 MDA is a game automation assistant built on [MaaFramework](https://github.com/MaaXYZ/MaaFramework), rewritten from [DoroHelper](https://github.com/1204244136/DoroHelper). It automates daily routines and event content in the game, saving you time and effort.
@@ -65,7 +64,6 @@ MDA includes a variety of tasks covering dailies, events, and utilities — all 
 - 🗺️ **Auto Map Pushing**: Automatically click monsters to fight and trigger mechanisms to push through main stages.
 - 🔴 **Clear Red Dots**: Automatically clear red-dot notifications across supported interfaces.
 - 👥 **Friend Management**: Remove long-inactive friends and accept all friend requests.
-- 📊 **Quota Display**: Show today's used and remaining run quota; this task consumes no quota.
 
 ---
 
@@ -97,11 +95,11 @@ If you are using an English or other language game interface, you may encounter 
 
 ## ⭐ Star History
 
-<a href="https://www.star-history.com/#1204244136/MDA&Date">
+<a href="https://www.star-history.com/#dingi8528/MDA&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=1204244136/MDA&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=1204244136/MDA&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=1204244136/MDA&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=dingi8528/MDA&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=dingi8528/MDA&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=dingi8528/MDA&type=Date" />
   </picture>
 </a>
 

@@ -1,11 +1,5 @@
 {
     "OutpostMain": {
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "HallEnterOutpost",
             "[JumpBack]CommonReturnHall"

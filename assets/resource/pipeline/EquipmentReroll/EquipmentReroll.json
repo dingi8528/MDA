@@ -1,12 +1,6 @@
 {
     "EquipmentRerollMain": {
         "desc": "洗词条任务入口：从详情资讯页面开始，先识别四件装备，再按自定义配额执行效果变更",
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "EquipmentRerollFlow"
         ]

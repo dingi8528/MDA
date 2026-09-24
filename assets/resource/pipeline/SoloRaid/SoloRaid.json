@@ -2,12 +2,6 @@
     "SoloRaidMain": {
         "desc": "单人突击入口",
         "max_hit": 1,
-        "action": {
-            "type": "Custom",
-            "param": {
-                "custom_action": "RuntimeQuotaCheck"
-            }
-        },
         "next": [
             "SoloRaidEntry",
             "[JumpBack]CommonReturnHall"
