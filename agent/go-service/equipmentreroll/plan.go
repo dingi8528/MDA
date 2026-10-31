@@ -16,6 +16,23 @@ const TargetEffectElementalDamage = "优越代码伤害增加"
 // TargetEffectAttackIncrease 是常用目标效果（官方名称）。
 const TargetEffectAttackIncrease = "攻击力增加"
 
+// TargetEffectCritRate 是暴击率效果（官方名称），与暴击伤害同属可替换组。
+const TargetEffectCritRate = "暴击率增加"
+
+// TargetEffectCritDamage 是暴击伤害效果（官方名称），与暴击率同属可替换组。
+const TargetEffectCritDamage = "暴击伤害增加"
+
+// costDecisionEpsilon 是"期望剩余成本"接受阈值：候选状态的期望成本必须比当前状态
+// 低至少该值，才认为发生了真实改善。单位与期望成本一致（订制模块数）。
+// 取值 0.01 用于滤掉浮点累计与离散枚举带来的极小差值——这类差值不是策略信号，
+// 却会让结果页在"变更/维持"之间反复摇摆，因此不允许它单独驱动决策。
+const costDecisionEpsilon = 0.01
+
+// costTieEpsilon 判定"期望成本持平"的容差（短期最优分支的额外要求）。
+// 它必须远小于 costDecisionEpsilon：真实改善由 costDecisionEpsilon 把关，
+// 这里只用来识别数值上完全持平的状态，避免让"略差"的候选借有效词条数上升混进来。
+const costTieEpsilon = 1e-6
+
 // ResultDecision 表示效果变更结果页的接受方向。
 type ResultDecision int
 
@@ -229,30 +246,25 @@ func globalEffectiveAffixCount(parts map[string]partScan, quota map[string]int) 
 
 // decideQuotaByExpectedCost 按"期望剩余订制模块成本"决定结果页是否接受变更。
 // 候选状态的全局期望成本严格低于当前状态才接受（方向 A：决策改为期望成本）。
-// 期望成本由 expectedModulesForQuota 计算（基于槽位获得概率 / 效果权重 / 同结果排除 / 锁定与重洗费用）。
+// 期望成本包含槽位出现率、效果权重及未来逐步加锁费用。
 func decideQuotaByExpectedCost(current, candidate map[string]partScan, quota map[string]int) ResultDecision {
 	curCost := expectedModulesForQuota(current, quota)
 	candCost := expectedModulesForQuota(candidate, quota)
-	// 宏观口径：期望成本严格更低才接受。
-	if candCost < curCost-1e-6 {
+	// 宏观口径：期望成本必须比当前状态低至少 costDecisionEpsilon（真实改善）才接受。
+	if candCost < curCost-costDecisionEpsilon {
 		return ResultDecisionAccept
 	}
-	// 短期最优：宏观成本**未变差**（持平/相邻）时，若物理有效词条数上升也接受（即使下次洗会被洗掉）。
+	// 短期最优：宏观成本持平（差值在 costTieEpsilon 容差内）时，若物理有效词条数上升也接受（即使下次洗会被洗掉）。
 	// 这是“多拿多算”加成，不覆盖“宏观更差”的状态（不违反宏观最优）。
-	if candCost <= curCost+1e-6 && globalEffectiveAffixCount(candidate, quota) > globalEffectiveAffixCount(current, quota) {
+	if candCost <= curCost+costTieEpsilon && globalEffectiveAffixCount(candidate, quota) > globalEffectiveAffixCount(current, quota) {
 		return ResultDecisionAccept
 	}
 	return ResultDecisionKeep
 }
 
-// DesiredLockSlotForQuota 决定是否锁定某件装备的 2/3 号配额效果（分配感知 + 先苦后甜）。
-// 用 allocateQuotaRequired 得到“本件负责的配额效果集合”，再：
-//   - 饱和配额（本件负责 >=3 种，即每槽都需填配额，如 优4/攻4/装弹4 → 每件 优1/攻1/装弹1）：
-//     按“先苦后甜”先刷最难的 3 号（当前未持本件负责效果的最高难度槽），拿到才锁；
-//     不先锁已有效的低优先槽（避免把“赌 3 号一次成型”抬高成本）。
-//   - 非饱和（本件负责 1~2 种）：维持“拿到就锁”，用短视 DP 锁已落地的有效可锁槽。
+// DesiredLockSlotForQuota 按全局分配和动态续程成本选择下一把有收益的锁。
 //
-// 每件最多 2 锁；策略上只支持 2/3 号槽（1 号不锁——1 号 100% 易得、锁 1 追 23 代价高）。
+// 每件最多 2 锁；三个槽位统一比较续程成本，仅锁本件负责的需求效果。
 // material 指定锁定材料（“自订密钥”/“订制模块”，空串默认密钥）：用订制模组锁定时计入获取成本，决策更保守。
 func DesiredLockSlotForQuota(parts map[string]partScan, part string, quota map[string]int, material string) (int, bool) {
 	quota = normalizeQuota(quota)
@@ -264,17 +276,12 @@ func DesiredLockSlotForQuota(parts map[string]partScan, part string, quota map[s
 		// 每件最多 2 锁。
 		return 0, false
 	}
-	assigned := allocateQuotaRequired(parts, quota)
+	assigned := allocateQuotaRequiredWithMaterial(parts, quota, material)
 	if len(assigned[part]) == 0 {
 		// 本件无需再提供任何配额效果 → 不锁。
 		return 0, false
 	}
-	if len(assigned[part]) >= 3 {
-		// 饱和配额：先苦后甜。
-		slot := desiredLockSlotBitterSweet(scan, quota, assigned[part], material)
-		return slot, slot != 0
-	}
-	// 非饱和：锁已落地的有效可锁槽（拿到就锁）。
+	// 与成本估值共用动态策略；必要时连续新增两把锁。
 	slot, _ := bestLockSlotAndCostForRequired(scan, quota, assigned[part], material)
 	return slot, slot != 0
 }
@@ -283,9 +290,13 @@ func DesiredLockSlotForQuota(parts map[string]partScan, part string, quota map[s
 // 按单件期望成本比较：候选（变更后）的期望剩余订制模块消耗严格更低才接受。
 // 退化场景下其余三件贡献未知，按“本件需提供全部正数配额效果”（positiveQuotaEffects）保守计算。
 func DecideResultPageQuota(current, changed [maxSlot]string, currentScan partScan, quota map[string]int) ResultDecision {
+	return decideResultPageQuotaWithMaterial(current, changed, currentScan, quota, "")
+}
+
+func decideResultPageQuotaWithMaterial(current, changed [maxSlot]string, currentScan partScan, quota map[string]int, material string) ResultDecision {
 	quota = normalizeQuota(quota)
 	required := positiveQuotaEffects(quota)
-	currentScanE := currentScan
+	currentScanE := effectPostRollScan(currentScan)
 	for i := range currentScanE.Slots {
 		currentScanE.Slots[i].Effect = current[i]
 	}
@@ -294,13 +305,13 @@ func DecideResultPageQuota(current, changed [maxSlot]string, currentScan partSca
 		changedScan.Slots[i].Effect = changed[i]
 		changedScan.Slots[i].Value = ""
 	}
-	currentCost := partExpectedCostForRequired(currentScanE, quota, required, "")
-	changedCost := partExpectedCostForRequired(changedScan, quota, required, "")
-	if changedCost < currentCost-1e-6 {
+	currentCost := partExpectedCostForRequired(currentScanE, quota, required, material)
+	changedCost := partExpectedCostForRequired(changedScan, quota, required, material)
+	if changedCost < currentCost-costDecisionEpsilon {
 		return ResultDecisionAccept
 	}
-	// 短期最优：宏观成本未变差（持平/相邻）时，本件有效词条数上升也接受（即使下次会被洗掉）。
-	if changedCost <= currentCost+1e-6 && effectiveAffixCount(changedScan, quota) > effectiveAffixCount(currentScanE, quota) {
+	// 短期最优：宏观成本持平（差值在 costTieEpsilon 容差内）时，本件有效词条数上升也接受（即使下次会被洗掉）。
+	if changedCost <= currentCost+costTieEpsilon && effectiveAffixCount(changedScan, quota) > effectiveAffixCount(currentScanE, quota) {
 		return ResultDecisionAccept
 	}
 	return ResultDecisionKeep

@@ -1,8 +1,8 @@
 {
     "TribeTowerMain": {
         "next": [
-            "ArkEnterTribeTower",
-            "[JumpBack]CommonEnterArk"
+            "TribeTowerTaskFlow",
+            "[JumpBack]SceneEnterTribeTower"
         ]
     },
     "ArkEnterTribeTower": {
@@ -260,7 +260,7 @@
                     21
                 ],
                 "expected": [
-                    ".*无限.*" //无限之塔
+                    ".*塔.*" //无限之塔
                 ]
             }
         }

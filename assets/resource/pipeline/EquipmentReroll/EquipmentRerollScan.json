@@ -117,28 +117,43 @@
         ]
     },
     "__EquipmentRerollLocateFlag": {
-        "desc": "装备详情页锚点定位：Flag 小图标，用于按固定 offset 推导三个槽位",
+        "desc": "装备详情页锚点定位：改造装备效果行的蓝色信息图标（HSV 判据，锚点框≈(491,432,16,15)/(491,449,16,15) 随布局浮动）",
         "recognition": {
-            "type": "TemplateMatch",
+            "type": "ColorMatch",
             "param": {
                 "roi": [
-                    480,
+                    486,
                     400,
-                    200,
-                    90
+                    28,
+                    70
                 ],
-                "template": [
-                    "EquipmentReroll/InspectFlag.png"
+                "method": 40,
+                "lower": [
+                    [
+                        88,
+                        120,
+                        60
+                    ]
                 ],
-                "threshold": 0.9,
-                "order_by": "Score"
+                "upper": [
+                    [
+                        112,
+                        255,
+                        255
+                    ]
+                ],
+                "count": 80
             }
         },
         "pre_delay": 0,
         "anchor": "EquipmentRerollInspectFlag",
         "post_delay": 0,
+        "timeout": 1500,
         "next": [
             "EquipmentRerollScanSlot1"
+        ],
+        "on_error": [
+            "EquipmentRerollScanFailed"
         ]
     },
     "EquipmentRerollScanSlot1": {
@@ -159,6 +174,9 @@
         "rate_limit": 100,
         "next": [
             "EquipmentRerollScanSlot2"
+        ],
+        "on_error": [
+            "EquipmentRerollScanFailed"
         ]
     },
     "EquipmentRerollScanSlot2": {
@@ -179,6 +197,9 @@
         "rate_limit": 100,
         "next": [
             "EquipmentRerollScanSlot3"
+        ],
+        "on_error": [
+            "EquipmentRerollScanFailed"
         ]
     },
     "EquipmentRerollScanSlot3": {
@@ -213,21 +234,40 @@
         ]
     },
     "__EquipmentRerollSlot1AffixOCR": {
-        "desc": "第1槽词条区域 OCR（Flag 锚点 + offset，宽 150）",
+        "desc": "第1槽完整行直接识别，保留完整名称和数值，避免居中文字被裁断",
         "recognition": {
             "type": "OCR",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    45,
-                    136,
+                    -1,
+                    52,
+                    209,
                     7
                 ],
                 "expected": [
                     ".*"
                 ],
                 "only_rec": true
+            }
+        }
+    },
+    "__EquipmentRerollSlot1AffixDetectedOCR": {
+        "desc": "第1槽完整行检测识别，补充直接识别的裁剪路径",
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": "[Anchor]EquipmentRerollInspectFlag",
+                "roi_offset": [
+                    -1,
+                    52,
+                    209,
+                    7
+                ],
+                "expected": [
+                    ".*"
+                ],
+                "only_rec": false
             }
         }
     },
@@ -238,9 +278,9 @@
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    45,
-                    211,
+                    -1,
+                    52,
+                    209,
                     7
                 ],
                 "expected": [
@@ -257,9 +297,9 @@
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    45,
-                    211,
+                    -1,
+                    52,
+                    209,
                     7
                 ],
                 "expected": [
@@ -276,16 +316,16 @@
         }
     },
     "__EquipmentRerollSlot1LockBlue": {
-        "desc": "第1槽锁定区域蓝色锁 ColorMatch（永久锁）",
+        "desc": "第1槽锁定按钮蓝色锁 ColorMatch（永久锁）；roi_offset 为增量：锚点框(14x15)+该值=(768,501,26,23)",
         "recognition": {
             "type": "ColorMatch",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    135,
-                    45,
-                    61,
-                    7
+                    277,
+                    52,
+                    10,
+                    8
                 ],
                 "lower": [
                     [
@@ -306,16 +346,16 @@
         }
     },
     "__EquipmentRerollSlot1LockOrange": {
-        "desc": "第1槽锁定区域橙色锁 ColorMatch（一次性锁）",
+        "desc": "第1槽锁定按钮橙色锁 ColorMatch（一次性锁）；roi_offset 为增量：锚点框(14x15)+该值=(768,501,26,23)",
         "recognition": {
             "type": "ColorMatch",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    135,
-                    45,
-                    61,
-                    7
+                    277,
+                    52,
+                    10,
+                    8
                 ],
                 "lower": [
                     [
@@ -336,21 +376,40 @@
         }
     },
     "__EquipmentRerollSlot2AffixOCR": {
-        "desc": "第2槽词条区域 OCR（Flag 锚点 + offset，宽 150）",
+        "desc": "第2槽完整行直接识别，保留完整名称和数值，避免居中文字被裁断",
         "recognition": {
             "type": "OCR",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    69,
-                    136,
+                    -1,
+                    76,
+                    209,
                     7
                 ],
                 "expected": [
                     ".*"
                 ],
                 "only_rec": true
+            }
+        }
+    },
+    "__EquipmentRerollSlot2AffixDetectedOCR": {
+        "desc": "第2槽完整行检测识别，补充直接识别的裁剪路径",
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": "[Anchor]EquipmentRerollInspectFlag",
+                "roi_offset": [
+                    -1,
+                    76,
+                    209,
+                    7
+                ],
+                "expected": [
+                    ".*"
+                ],
+                "only_rec": false
             }
         }
     },
@@ -361,9 +420,9 @@
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    69,
-                    211,
+                    -1,
+                    76,
+                    209,
                     7
                 ],
                 "expected": [
@@ -380,9 +439,9 @@
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    69,
-                    211,
+                    -1,
+                    76,
+                    209,
                     7
                 ],
                 "expected": [
@@ -399,16 +458,16 @@
         }
     },
     "__EquipmentRerollSlot2LockBlue": {
-        "desc": "第2槽锁定区域蓝色锁 ColorMatch（永久锁）",
+        "desc": "第2槽锁定按钮蓝色锁 ColorMatch（永久锁）；roi_offset 为增量：锚点框(14x15)+该值=(768,525,26,23)",
         "recognition": {
             "type": "ColorMatch",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    135,
-                    69,
-                    61,
-                    7
+                    277,
+                    76,
+                    10,
+                    8
                 ],
                 "lower": [
                     [
@@ -429,16 +488,16 @@
         }
     },
     "__EquipmentRerollSlot2LockOrange": {
-        "desc": "第2槽锁定区域橙色锁 ColorMatch（一次性锁）",
+        "desc": "第2槽锁定按钮橙色锁 ColorMatch（一次性锁）；roi_offset 为增量：锚点框(14x15)+该值=(768,525,26,23)",
         "recognition": {
             "type": "ColorMatch",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    135,
-                    69,
-                    61,
-                    7
+                    277,
+                    76,
+                    10,
+                    8
                 ],
                 "lower": [
                     [
@@ -459,21 +518,40 @@
         }
     },
     "__EquipmentRerollSlot3AffixOCR": {
-        "desc": "第3槽词条区域 OCR（Flag 锚点 + offset，宽 150）",
+        "desc": "第3槽完整行直接识别，保留完整名称和数值，避免居中文字被裁断",
         "recognition": {
             "type": "OCR",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    93,
-                    136,
+                    -1,
+                    100,
+                    209,
                     7
                 ],
                 "expected": [
                     ".*"
                 ],
                 "only_rec": true
+            }
+        }
+    },
+    "__EquipmentRerollSlot3AffixDetectedOCR": {
+        "desc": "第3槽完整行检测识别，补充直接识别的裁剪路径",
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": "[Anchor]EquipmentRerollInspectFlag",
+                "roi_offset": [
+                    -1,
+                    100,
+                    209,
+                    7
+                ],
+                "expected": [
+                    ".*"
+                ],
+                "only_rec": false
             }
         }
     },
@@ -484,9 +562,9 @@
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    93,
-                    211,
+                    -1,
+                    100,
+                    209,
                     7
                 ],
                 "expected": [
@@ -503,9 +581,9 @@
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    -90,
-                    93,
-                    211,
+                    -1,
+                    100,
+                    209,
                     7
                 ],
                 "expected": [
@@ -522,16 +600,16 @@
         }
     },
     "__EquipmentRerollSlot3LockBlue": {
-        "desc": "第3槽锁定区域蓝色锁 ColorMatch（永久锁）",
+        "desc": "第3槽锁定按钮蓝色锁 ColorMatch（永久锁）；roi_offset 为增量：锚点框(14x15)+该值=(768,549,26,23)",
         "recognition": {
             "type": "ColorMatch",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    135,
-                    93,
-                    61,
-                    7
+                    277,
+                    100,
+                    10,
+                    8
                 ],
                 "lower": [
                     [
@@ -552,16 +630,16 @@
         }
     },
     "__EquipmentRerollSlot3LockOrange": {
-        "desc": "第3槽锁定区域橙色锁 ColorMatch（一次性锁）",
+        "desc": "第3槽锁定按钮橙色锁 ColorMatch（一次性锁）；roi_offset 为增量：锚点框(14x15)+该值=(768,549,26,23)",
         "recognition": {
             "type": "ColorMatch",
             "param": {
                 "roi": "[Anchor]EquipmentRerollInspectFlag",
                 "roi_offset": [
-                    135,
-                    93,
-                    61,
-                    7
+                    277,
+                    100,
+                    10,
+                    8
                 ],
                 "lower": [
                     [
@@ -609,5 +687,17 @@
         },
         "post_delay": 0,
         "rate_limit": 100
+    },
+    "EquipmentRerollScanFailed": {
+        "desc": "无法确认词条或页面已失效时停止，不提交不完整快照",
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "EquipmentRerollFailAction",
+                "custom_action_param": {
+                    "reason": "scan_unreadable"
+                }
+            }
+        }
     }
 }

@@ -57,9 +57,9 @@
             "param": {
                 "roi": [
                     0,
-                    120,
+                    106,
                     200,
-                    260
+                    274
                 ],
                 "template": [
                     "RedDotClear/BlaBla.png"
@@ -80,7 +80,8 @@
                     20
                 ],
                 "template": [
-                    "Common/New.png"
+                    "Common/New.png",
+                    "Common/RedDot.png"
                 ]
             }
         }
@@ -231,7 +232,8 @@
         "post_wait_freezes": 1000,
         "next": [
             "[JumpBack]CommonConfirmReward",
-            "BlaBlaDialogueGoBack"
+            "[JumpBack]BlaBlaDialogueGoBack",
+            "CommonEndTask"
         ]
     },
     "BlaBlaDialogueGoBack": {

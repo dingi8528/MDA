@@ -11,14 +11,14 @@
 ## 同步开发工程
 
 1. 检查 `git status --short --branch`，确认工作区状态；执行 `git fetch upstream --prune`，比较 `HEAD...upstream/main` 的提交与文件差异。继续在当前维护分支上合并上游；若有冲突，逐项保留本地已移除会员功能的决定。
-2. 查看新增的 Go、Pipeline、任务、语言包、文档和发布工作流。检查 `membership`、`RuntimeQuotaCheck`、`QuotaDisplay`、`ticket-generator`、运行额度、赞助/订阅和 MirrorChyan 相关引用。重点核对新任务入口是否又接入额度动作。不要仅凭 `quota` 或 `VIP` 字符串删除游戏功能。
+2. 查看新增的 Go、Pipeline、任务、语言包、文档和发布工作流。检查 `membership`、`RuntimeQuotaCheck`、`QuotaDisplay`、`ticket-generator`、运行额度、赞助/订阅和 MirrorChyan 相关引用。重点核对新任务入口是否又接入额度动作。Android 构建同样不保留身份桥接或付费开关；「Agent 自检」使用独立的 `AgentHealthCheck` 动作。不要仅凭 `quota` 或 `VIP` 字符串删除游戏功能。
 3. 维持 `assets/interface.json` 指向 fork，且不含 `mirrorchyan_rid`、`mirrorchyan_multiplatform`；开发工程的 `version` 由工程自己管理，不拿打包版的本地版本覆盖它。
 4. 运行 `go -C agent\go-service test ./...`、`npx @nekosu/maa-tools check`、`npm run check:theme`、`npm run format:check`，以及 `python tools\validate_schema.py --resource-dirs assets\resource --exclude-dirs assets\resource\announcement --interface-files assets\interface.json`。修改 Go 后重新构建 Agent。Windows 控制台若无法打印 Schema 校验符号，先设置 `$env:PYTHONIOENCODING='utf-8'`。
 5. 检查最终差异和残余会员引用，使用英文 Conventional Commits 信息提交会员相关改动，不自动推送。
 
 ## 同步打包版
 
-1. 对比开发工程的 `assets/resource`、`assets/tasks`、`assets/locales`、`README.md`、`LICENSE` 与打包版对应文件，列出新增、变更和需删除的旧会员文件。只复制有差异的文件，不整目录覆盖。
+1. 对比开发工程的 `assets/resource`、`assets/tasks`、`assets/locales`、`README.md`、`LICENSE` 与打包版对应文件，列出新增、变更和需删除的旧会员文件。只复制有差异的文件，不整目录覆盖。以上次同步清单或对应 Git 提交的资源列表为基线，备份并删除已从源工程移除的受管文件，避免旧 Pipeline 与新文件重复定义节点；用户额外文件和打包 OCR 模型不据此删除。
 2. 在打包版 `backup/sync-no-membership-时间戳/` 备份将覆盖的文件与活动配置，记录复制前后的 SHA-256。不要复制或清空 `MDA.exe`、`maafw`、用户游戏配置、`cache`、`debug`，也不要删除打包版保留的 `resource/model/ocr` 模型。过时的会员设备缓存可以直接删除，避免在新备份中继续保存设备数据。
 3. 按 `assets/resource → resource`、`assets/tasks → tasks`、`assets/locales → locales` 复制差异；复制已重新编译的 Windows `agent/go-service.exe`。该二进制用打包版显示版本设置 `main.Version`，并采用 `CGO_ENABLED=0`、`-trimpath` 构建。
 4. 打包版 `interface.json` 从开发工程复制后，单独设置 `version` 为 `v999.0.0`，移除 `github`、`mirrorchyan_rid`、`mirrorchyan_multiplatform`，使该本地包不从项目更新来源自动更新。除非用户另行要求，后续同步继续保留这三个字段缺失及本地版本，不照搬开发工程版本。

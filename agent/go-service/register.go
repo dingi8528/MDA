@@ -8,10 +8,12 @@ import (
 	"github.com/1204244136/MDA/agent/go-service/taskersink/aspectratio"
 	"github.com/1204244136/MDA/agent/go-service/taskersink/hdrcheck"
 	"github.com/1204244136/MDA/agent/go-service/taskersink/processcheck"
+	maa "github.com/MaaXYZ/maa-framework-go/v4"
 	"github.com/rs/zerolog/log"
 )
 
 func registerAll() {
+	maa.AgentServerRegisterCustomAction("AgentHealthCheck", &agentHealthCheck{})
 	// Resource Sink
 	resource.EnsureResourcePathSink()
 

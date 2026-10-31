@@ -3,8 +3,11 @@
         "desc": "咨询入口",
         "max_hit": 1,
         "next": [
+            "AdviseEnterAdvisePage",
+            "AdviseMainPageEntered",
+            "AdviseNikkeMainPageEntered",
             "AdviseEntryFlow",
-            "[JumpBack]CommonReturnHall"
+            "[JumpBack]SceneEnterHall"
         ]
     },
     "AdviseEntryFlow": {
@@ -53,12 +56,28 @@
         "post_wait_freezes": 1000,
         "next": [
             "AdviseEnterAdvisePage",
-            "[JumpBack]AdviseNikkeMainPageEntered",
+            "AdviseNikkeMainPageEntered",
             "AdviseEnterNikkePage"
         ]
     },
     "AdviseEnterAdvisePage": {
-        "desc": "进入咨询界面",
+        "desc": "咨询业务入口，保留 NikkeAdvise 选项开关",
+        "recognition": {
+            "type": "Or",
+            "param": {
+                "any_of": [
+                    "AdviseMainPageEntered",
+                    "AdviseNikkeMainPageEntered"
+                ]
+            }
+        },
+        "next": [
+            "AdviseMainPageFlow",
+            "AdviseClickAdvisePage"
+        ]
+    },
+    "AdviseClickAdvisePage": {
+        "desc": "从妮姬页面点击咨询入口",
         "recognition": {
             "type": "OCR",
             "param": {
@@ -78,9 +97,24 @@
         },
         "post_wait_freezes": 500,
         "next": [
+            "AdviseMainPageFlow",
+            "AdviseClickAdvisePage"
+        ]
+    },
+    "AdviseMainPageFlow": {
+        "desc": "已进入咨询页面后执行业务",
+        "recognition": {
+            "type": "And",
+            "param": {
+                "all_of": [
+                    "AdviseMainPageEntered"
+                ]
+            }
+        },
+        "next": [
             "[JumpBack]AdviseEpisodeViewingEntry",
             "AdviseChooseNikke",
-            "[JumpBack]AdviseMainPageEntered",
+            "AdviseMainPageEntered",
             "AdviseEnterAdvisePage"
         ]
     },
@@ -97,7 +131,8 @@
                 ],
                 "expected": [
                     ".*RAN.*"
-                ]
+                ],
+                "only_rec": true //避免 batch OCR 降采样后 det 读不出小字
             }
         },
         "action": {
@@ -121,7 +156,8 @@
                 ],
                 "expected": [
                     "咨询"
-                ]
+                ],
+                "only_rec": true //避免 batch OCR 降采样后 det 读不出小字
             }
         }
     },
@@ -138,7 +174,8 @@
                 ],
                 "expected": [
                     "妮姬"
-                ]
+                ],
+                "only_rec": true //避免 batch OCR 降采样后 det 读不出小字
             }
         }
     }

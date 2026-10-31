@@ -1,8 +1,8 @@
 {
     "ShopMain": {
         "next": [
-            "HallEnterShop",
-            "[JumpBack]CommonReturnHall"
+            "ShopCornerFlow",
+            "[JumpBack]SceneEnterShop"
         ]
     },
     "HallEnterShop": {

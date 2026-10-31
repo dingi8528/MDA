@@ -1,6 +1,10 @@
 # NIKKE 洗词条策略与 MDA 实现逻辑
 
-> 本文主要描述效果重洗的策略与历史实现。任务的四种组合见[使用说明](README.md)；数值分支的角色总 T、单件 T、免费解锁与状态核验见[洗词条数值实现](洗词条数值实现.md)。文中旧的解锁限制不代表当前数值分支行为，验证范围以该文档为准。整组效果与数值完全重复排除影响两类概率，旧独立抽样期望数字以[当前模型](洗词条概率与期望计算.md)的边界说明为准。
+> 2026-10-21 效果成本修正：当前效果模式以包含未来逐步加锁的动态续程成本，统一预估、结果取舍及锁定动作；四件目标按局部成本总和精确分配。本文后续“先苦后甜”、立即单锁比较及承载者排序的旧实现描述仅作历史参考，不再是独立执行规则。当前算法、材料口径及限制见[洗词条概率与期望计算](洗词条概率与期望计算.md)。
+
+> 2026-10-22 禁止词条修正：含禁止项的有利候选可先保留，再锁住需求效果并清除禁项。三个槽位统一比较动态成本，后文“策略不锁 1 号槽”“只支持 2/3 号槽”的描述也仅供历史参考；最终达标仍要求不存在禁止词条。
+
+> 本文主要描述效果重洗的策略与历史实现。任务的四种组合见[使用说明](README.md)；数值分支的角色总 T、单件 T、免费解锁与状态核验见[洗词条数值实现](洗词条数值实现.md)。文中旧的解锁限制不代表当前数值分支行为，验证范围以该文档为准。效果组合不排除旧结果，效果与数值两类概率模型及历史期望数字的适用范围以[当前模型](洗词条概率与期望计算.md)为准。
 
 > 本文件是供开发 Agent 理解需求并编写 MDA 任务的策略规格，描述“洗装备”和“洗角色”的目标、锁定策略、概率决策及伪代码。实际读取界面、计算结果和执行点击的是 MDA 运行时，不是 Agent。游戏内效果名称、数值与 UI 文案以[装备系统与洗词条研究](装备系统与洗词条研究.md)为准；概率模型与期望消耗计算见[洗词条概率与期望计算](洗词条概率与期望计算.md)。
 
@@ -230,9 +234,25 @@ HIGH_MODULE_LOCK_WEIGHT >> KEY_LOCK_WEIGHT
 
 全部正数配额合计必须在 `1-12` 条之间（Go 端 `quotaIsValid` 校验）。
 
+**允许词条替换（可替换词条对）**
+
+角色效果模式只有一份配额。开启「允许词条替换」后，用两个 select 选择任意两项可互相替换的官方词条（X=X），两项的正数需求合并为**合计条数**：任意一项出现都计入合计，未填写配额的一项也能顶替。
+
+例如选择暴击率增加 ↔ 暴击伤害增加后，「暴击伤害 = 需求 3、暴击率 = 不要求」等价于「暴击 + 爆伤合计 3 条」，洗出 2 条暴击伤害加 1 条暴击率同样达标，不需要枚举 3+0 / 2+1 / 1+2 / 0+3 四套方案。替换对不限于暴击，任意两项官方效果都能组合；两项必须不同且都选择后才生效。关闭时（默认）仍按各效果分别达标。
+
+实现上，Go 端把合计条数展开成若干完整等价目标（每种分配一个目标），继续复用既有 OR 规划器：任一完整目标达标即整体达标。展开严格保持合计条数与其它效果配额不变，因此不会放宽或收紧目标；「禁止」成员不参与分摊，仍由每个目标继续约束。两项词条对最多展开 5 个目标。
+
+目标必须作为完整配额组保存。例如「4 攻 4 优 4 暴击率」与「4 攻 4 优 3 暴击率 1 装弹」不能逐效果取最小值，否则会误收只有 11 条有效效果的组合；也不能取最大值形成 13 条不可达目标。
+
+配置仍使用承载点的扁平键：`quota_<效果名>` 是唯一一份配额；`allow_substitution` 控制是否启用替换；`substitution_affix1/2` 保存两项官方效果名。只有完全缺少配额字段时才兼容读取节点默认值；显式全为「不要求」必须报错，不能静默恢复默认目标。校验官方效果、单效果 `-1/0/1-4` 与总需求 `1-12`；数值模式与单件模式忽略该开关。
+
+替换目标之间是 OR：规划器同时保留直接完成某一目标的路线，以及「先完成共用准备，最后一件装备根据实际结果选择目标」的路线。在最后一件中，满足任一完整目标对应局部要求的结果都计入成功概率；新增锁、保留结果及未来续程成本通过同一 OR Bellman 模型比较。每次结果确认后重新计算。
+
+这种策略集合包含各个单目标计划，因此开启替换不会提高当前模型的估算成本；合计条数相同的替换只会增加可接受的结果。它仍是分解后的滚动估值，未穷举四件装备随机过程与所有跨件目标交换，不宣称全局 MDP 最优。初始预估统一使用模组锁口径；有限密钥库存也不等价于无限免费锁。
+
 > 接口统一说明：角色配额的每个效果 select 与单件模式的"需求词条行"select 一样，case 直接写死语义值，
 > 配置统一写入承载点 **`EquipmentRerollLockNeed.attach` 的扁平顶层键**（模式 `mode`；单件部位 `part`；
-> 角色 `quota_<效果名>`；单件 `want1/2/3`、`slot1/2/3`）。选择 attach 是因为 MaaFramework 对同一节点多次
+> 角色 `quota_<效果名>`、`allow_substitution`、`substitution_affix1/2`；单件 `want1/2/3`、`slot1/2/3`）。选择 attach 是因为 MaaFramework 对同一节点多次
 > override 时 `custom_recognition_param` 是**整体替换**（后覆盖会丢失前值），而 attach 顶层键按 key 合并互不覆盖。
 > 其余组件（AllSatisfied / ChoosePart / ResultPage / KeepLockCheck / SingleDecide 等）
 > 统一经 `loadCarrierConfig` 从承载点读取，不再各自接收 override。
@@ -241,12 +261,13 @@ HIGH_MODULE_LOCK_WEIGHT >> KEY_LOCK_WEIGHT
 
 **常见示例：**
 
-| 习惯叫法                          | 等价全局配额                                                       |
-| --------------------------------- | ------------------------------------------------------------------ |
-| 四优                              | 优越代码伤害增加 4                                                 |
-| 四优+装弹                         | 优越代码伤害增加 4、最大装弹数增加 1                               |
-| 攻 4 + 优 4                       | 攻击力增加 4、优越代码伤害增加 4                                   |
-| 攻 4 + 优 4 + 装弹 1 + 蓄力速度 3 | 攻击力增加 4、优越代码伤害增加 4、最大装弹数增加 1、蓄力速度增加 3 |
+| 习惯叫法                          | 等价全局配额                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 四优                              | 优越代码伤害增加 4                                                                                          |
+| 四优+装弹                         | 优越代码伤害增加 4、最大装弹数增加 1                                                                        |
+| 攻 4 + 优 4                       | 攻击力增加 4、优越代码伤害增加 4                                                                            |
+| 攻 4 + 优 4 + 装弹 1 + 蓄力速度 3 | 攻击力增加 4、优越代码伤害增加 4、最大装弹数增加 1、蓄力速度增加 3                                          |
+| 4 优 4 攻 3 暴击/爆伤 1 装弹      | 优越代码伤害增加 4、攻击力增加 4、暴击伤害增加 3（开启允许词条替换并选择暴击率/暴击伤害）、最大装弹数增加 1 |
 
 “装弹”“蓄力速度”等只是展示简写，内部识别必须使用官方效果名称“最大装弹数增加”“蓄力速度增加”，不能把简写直接当作 OCR 目标字符串。
 
@@ -918,7 +939,7 @@ EquipmentRerollMain
       → EquipmentRerollDecide           # 决策分发（自定义词条配额 1-12）
         → EquipmentRerollChoosePart      # 全局有限步前瞻：选择期望收益最高的部位
           → Open{Part}Details（通用打开）
-            → LockGate（按自定义配额检查 2/3号未锁目标 → 锁定流程，Flag 锚定仅详情页）
+            → LockGate（按自定义配额检查 2/3号未锁目标 → 锁定流程，蓝 i 锚定仅详情页）
               → LockRouteSlot → ClickChangeEffect（新版统一改走确认页）→ KeepLockCheck → KeepClickSlot2/3 → LockPageEntered → MaterialCheck（顺便读一次材料库存）→ LockSelectMaterial → LockSelectKey/Module → LockConfirm → LockDone(写快照)
             → ClickChangeEffect（一级，详情页进入消耗材料确认页）
               → PrepareRerollCost（记录待消耗订制模块数）
@@ -959,7 +980,7 @@ EquipmentRerollMain
 - 决策页沿用之前的锚点方案读取变更槽位（`ResultSlot` 定位 + 内部 OCR 节点），不使用 Flag offset；Go 从 OCR 原文解析词条名与数值。
 - 洗练完成经 `EquipmentRerollReturnToDecide` 回 `EquipmentRerollDecide`，直接基于快照调度下一件未达标装备。
 
-### 8.4 槽位定位：固有几何 + Flag 锚点 + offset
+### 8.4 槽位定位：固有几何 + 蓝 i 锚点 + offset
 
 #### 固有几何（实测记录）
 
@@ -973,18 +994,26 @@ EquipmentRerollMain
 
 注意：由于装备描述行数不同，换装备后槽位组可能在竖直方向整体偏移，甚至 1 槽看起来落到 2 槽的位置。因此**不能使用固定窄条带 ROI 逐个定位**，应锚定固定标识后按上述几何做 offset。
 
-#### Flag 锚点与 offset（实测记录）
+#### 详情页锚点与 offset（实测记录）
 
-- 锚点模板：`EquipmentReroll/InspectFlag.png`（Flag 小图标，14×15）。
-- 实测映射：Flag 识别框 `[580, 439, 14, 15]` 时，第 1 槽位左上角为 `(490, 484)`。
-- Flag 框左上角 → 第 1 槽位左上角偏移：`(-90, 45)`，距离恒定。
-- 第 N 槽位左上角 = Flag 框左上角 + `(-90, 45 + (N-1)×24)`。
+- 锚点判据：`__EquipmentRerollLocateFlag` 用 **ColorMatch**（`method: 40` 即 HSV）锁定「改造装备效果」行左侧的**蓝色信息图标（蓝 i）**：ROI `[486, 400, 28, 70]`、`lower [[88,120,60]]`、`upper [[112,255,255]]`、`count 80`，锚定 `EquipmentRerollInspectFlag`。
+- 实测映射：蓝 i 匹配框 `[491, 432, 16, 15]`（腿部页）或 `[491, 449, 16, 15]`（头部/臂部/身躯页）时，第 1 槽位左上角为 `(490, 484)`。
+- 蓝 i 框左上角 → 第 1 槽位左上角偏移：`(-1, 52)`，距离恒定。
+- 第 N 槽位左上角 = 蓝 i 框左上角 + `(-1, 52 + (N-1)×24)`。
 - 槽位矩形 = 左上角 + `(300, 22)`。
+- **为什么不再用 `InspectFlag.png` 模板**（2026-10 故障回归记录，勿回退）：
+    - 该旗标是 14×15 的**低对比灰底小图标**，匹配分随采集条件剧烈波动：2459×1383 窗口下 `0.985`，出问题的 2034×1144 窗口下掉到 **`0.899`**（与原阈值 `0.9` 差 0.0011），节点只能空转满 `20s` 的 `reco_timeout` 再抛 `Task timeout`，整任务失败（用户侧表现为“停在腿部不动 20 秒后任务失败”）。
+    - 根因不是页面而是**缩放相位**：MaaFramework 默认把截图按短边 720 用 `INTER_AREA` 缩放到 `1280×720`（`ControllerAgent.h:327/334` + `ControllerAgent.cpp:1264`），相位随窗口尺寸变化，小模板对这种相位差极敏感；模板自身与现网渲染也本就有 0.05 以上的差距。
+    - 蓝 i 是纯饱和色（实测 R≈0 / G≈174 / B≈254，两套采集条件下几乎逐位一致），换成 HSV 色相+饱和度判据后对缩放相位、模糊、JPEG 压缩都不敏感：详情页计数 `158~166`，而效果锁定页 / OPTION CHANGE 结果页 / 重新设置数值确认页 / 装备列表页**全部为 `0`**。
+    - 顺带解决了 `__EquipmentRerollLockLocateFlag` 的老包袱：“确认页后重入偏暗”对 HSV 判据无影响（V 下限放到 60，模拟变暗到 55% 计数仍恒为 158），故其阈值从 `0.3` 的妥协值一并撤销。
+- **ROI 的安全边界（别踩）**：ROI 下沿不能超过 `y≈476`——OPTION CHANGE 结果页在 `y=477` 有一条蓝色边框，加高就会误命中；色域也不能放宽——宽松 RGB 域会让装备列表页的人物立绘爆出 348 个误报。
+- 三件与腿部页之间那 17px 的整体偏移由锚点框自动跟随（`ColorMatcher::count_non_zero` 返回 `boundingRect(色块) + roi.tl()`，box 随布局浮动），故 15 个子节点仍只需 `[Anchor]EquipmentRerollInspectFlag` + `roi_offset` 表达。
 
 #### Pipeline 结构（已实现）
 
-- `__EquipmentRerollLocateFlag`：TemplateMatch `InspectFlag.png`（0.9、order_by Score），锚定 `EquipmentRerollInspectFlag`。
-- 三个槽位不再分别识别，统一由 Flag 锚点 + 上述 offset 推导；槽内词条/数值/锁定区域沿用三区 ROI（150/75/75），各子节点以 `[Anchor]EquipmentRerollInspectFlag` + roi_offset 表达。
+- 同一蓝 i 判据（ROI/色域/count 完全一致）共用于 **6 个**“是否处于装备详情页”节点，保证锚点几何自洽：`__EquipmentRerollLocateFlag`（扫描锚点）、`__EquipmentRerollLockLocateFlag`（锁定流程锚点）、`EquipmentRerollLockAbortOnDetailsPage`、`EquipmentRerollLockAfterIsDetail`、`EquipmentRerollClickChangeEffectRetry`、`__EquipmentRerollValueDetailsPage`（洗数值模式被 `And(详情页 AND 效果变更按钮)` 引用）。
+- 三个槽位不再分别识别，统一由蓝 i 锚点 + 上述 offset 推导；槽内词条/数值/锁定区域沿用三区 ROI（150/75/75），各子节点以 `[Anchor]EquipmentRerollInspectFlag` + roi_offset 表达。
+- 锚点名 `EquipmentRerollInspectFlag` 与节点名 `__EquipmentRerollLocateFlag` 保留历史命名（改名要动 17 处引用，收益低）；`EquipmentReroll/InspectFlag.png` 已无引用，暂留作回滚备份。
 
 #### 决策页变更槽定位（Pipeline，保持）
 
@@ -1000,7 +1029,7 @@ EquipmentRerollMain
 
 **Pipeline 实现（两条锁定入口，汇合到同一锁页链路）**：
 
-- **详情页入口（已废弃）**：`EquipmentRerollLockGate → __LockLocateFlag(Flag锚点) → LockBranch[LockNeed/ClickChangeEffect] → LockRouteSlot`。新版客户端装备详情页的词条行已不可点击，`EquipmentRerollLockClickSlot2/3` 已删除；`LockRouteSlot` 一律路由到 `ClickChangeEffect`，锁定改由下面的确认页入口完成。
+- **详情页入口（已废弃）**：`EquipmentRerollLockGate → __EquipmentRerollLockLocateFlag(蓝 i 锚点) → LockBranch[LockNeed/ClickChangeEffect] → LockRouteSlot`。新版客户端装备详情页的词条行已不可点击，`EquipmentRerollLockClickSlot2/3` 已删除；`LockRouteSlot` 一律路由到 `ClickChangeEffect`，锁定改由下面的确认页入口完成。
 - **效果变更确认/结果页入口**：`KeepLockGate(OCR“将…改造效果与数值”) → KeepLockCheck → KeepLockRoute → KeepClickSlot2/3`（固定坐标）。
 - 汇合链路：`…ClickSlotX → LockPageEntered(复用 __EquipmentRerollLockTitle 确认效果锁定页) → MaterialCheck(顺便读一次材料库存) → LockSelectMaterial(Go按库存优先密钥、必要时模块) → LockSelectRouteAction → LockSelectKey/Module(OCR SELECT) → LockConfirm(OCR 确认) → LockDone(Go写快照+清pending)`。材料不足时 `LockSelectRecognition` 返回 `material_code=0`，由 `EquipmentRerollLockAbort` 清理 pending、关闭锁定页，再识别确认页/详情页并分别进入费用读取/效果变更；页面无法确认时显式失败。
 
@@ -1055,6 +1084,8 @@ EquipmentRerollMain
 - 模拟（单件、达到“三槽各含 优/攻/装弹”，200k 样本）：**最优锁定策略在两种材料下一致（饱和下先苦后甜最优）**，仅模块成本略有差异（密钥版 44.5 vs 模块版 50.4 模块；从不锁约 650；只锁2赌3 约 230；渐进去重 49.4/54.0）。因此**当自订密钥耗尽、脚本回退用订制模组时，无需改变锁定策略（先苦后甜/拿到就锁）**，只需把“买锁的模块”计入真实成本。
 - 决策实现：`bestLockSlotAndCostForRequired(scan, quota, required, material)` 接受锁定材料。材料来源：进入**效果锁定页**时由 `EquipmentRerollMaterialCheckRecognition` 用 OCR 读取一次材料「持有」数量（`__EquipmentRerollLockModuleHeld` / `__EquipmentRerollLockKeyHeld`）初始化 `Inventory` 余额；之后 `EquipmentRerollLockSelectRecognition` 直接读该余额并用 `Inventory.ChooseLockMaterial` 决策（有密钥用密钥、不足用订制模组），同时把材料传入 `DesiredLockSlotForQuota` / `desiredLockSlotForCurrentMode`。当材料为“订制模块”时，会把 `lockAcquireCost(当前锁数)`（0→1=2、1→2=3）计入锁定成本，使**模块锁定时决策更保守**；自订密钥获取成本为 0。详情页规划阶段若尚未读到库存（库存现在进锁定页才读），`EquipmentRerollLockCheckRecognition` 按“材料充足”乐观规划，真实持有量在锁定页读到后修正材料选择；两种材料都付不起时 `LockSelectRecognition` 返回 `material_code=0`，由 `EquipmentRerollLockAbort` 清状态并按关闭后的真实页面继续。
 
+- 库存 OCR 的候选过滤、千位分隔符归一化和最右数字选择统一由 Pipeline 的 `expected`、`replace`、`order_by: Horizontal` 与 `index: -1` 声明。Go 只读取框架选定的 `Best` 并转换为非负整数，不再按置信度、坐标或文本长度重新挑选候选，也不回退到未过滤的 `All`。
+
 **去重与轮转**：自定义配额每件最多 2 锁。`expireOneTimeLocks` 在每次 reroll 后使橙锁失效，蓝锁保留。Keep 分支回到 `ConfirmChangeEffect` 直接重洗同件（确认页内，Flag 不参与），Accept 分支经 `ReturnToDecide→Decide` 重调度（基于快照，Flag 重新锚定）。
 
 ### 8.6 决策页就绪与按钮兜底
@@ -1087,7 +1118,7 @@ EquipmentRerollMain
 | `EquipmentRerollChoosePart`                     | 全局有限步前瞻选择部位                                  | Go ChoosePartAction（期望收益/模块成本）                                      |
 | `EquipmentRerollOpen{Part}Details`              | 通用打开部位详情                                        | Head/Arms/Torso/Legs 模板                                                     |
 | `EquipmentRerollLockGate` / `LockBranch`        | 锁定前置分发（配额模式）                                | DirectHit 分支：LockNeed vs ClickChangeEffect                                 |
-| `__EquipmentRerollLockLocateFlag`               | 锁定前 Flag 锚定                                        | `InspectFlag.png` 0.9, 贴详情页                                               |
+| `__EquipmentRerollLockLocateFlag`               | 锁定前 详情页锚定（蓝 i）                               | ColorMatch HSV 蓝 i，ROI `[486,400,28,70]`，count 80                          |
 | `EquipmentRerollLockNeed` / `LockRouteSlot`     | 锁定需求判定与槽位路由                                  | Go LockCheck + RouteSlot（一律路由到 ClickChangeEffect 走确认页）             |
 | `EquipmentRerollLockAbort`                      | 材料不足放弃锁定并恢复到可确认页面                      | 清 pending + 关闭页面 + 确认页/详情页分流                                     |
 | `EquipmentRerollLockPageEntered`                | 效果锁定页确认                                          | 复用 `__EquipmentRerollLockTitle`（OCR 效果锁定）                             |
@@ -1164,10 +1195,10 @@ EquipmentRerollMain
 
 **`EquipmentRerollMode`**（select，父级、互斥）：
 
-| case                | 含义       | 嵌套子选项                                                      | pipeline_override                                                                                                         |
-| ------------------- | ---------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `Character`（默认） | 洗角色词条 | 9 个效果配额 select（`EquipmentRerollQuotaElementalDamage` 等） | `attach.mode = "character"`                                                                                               |
-| `Single`            | 洗单件词条 | `EquipmentRerollSinglePart`、`EquipmentRerollSingleWant1/2/3`   | `attach.mode = "single"`；`EquipmentRerollScanDetailsPageEntered.next → EquipmentRerollSingleScanRoute`（只扫选定那一件） |
+| case                | 含义       | 嵌套子选项                                                                                                                                               | pipeline_override                                                                                                         |
+| ------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `Character`（默认） | 洗角色词条 | 9 个效果配额 select（`EquipmentRerollQuotaElementalDamage` 等）＋`EquipmentRerollAllowSubstitution` switch＋其下的 `EquipmentRerollSubstitutionAffix1/2` | `attach.mode = "character"`；`attach.allow_substitution = true/false`；`attach.substitution_affix1/2 = "<官方效果名>"`    |
+| `Single`            | 洗单件词条 | `EquipmentRerollSinglePart`、`EquipmentRerollSingleWant1/2/3`                                                                                            | `attach.mode = "single"`；`EquipmentRerollScanDetailsPageEntered.next → EquipmentRerollSingleScanRoute`（只扫选定那一件） |
 
 两种模式共用入口 `EquipmentRerollMain` 与扫描流程；
 `EquipmentRerollAfterMaterialCheck` 读取承载点 `attach.mode` 分流到 `EquipmentRerollDecide`（角色）或

@@ -1,8 +1,8 @@
 {
     "InterceptionMain": {
         "next": [
-            "ArkEnterInterception",
-            "[JumpBack]CommonEnterArk"
+            "InterceptionBattleFlow",
+            "[JumpBack]SceneEnterInterception"
         ]
     },
     "ArkEnterInterception": {
@@ -17,13 +17,7 @@
                     23
                 ],
                 "expected": [
-                    "拦截战"
-                ],
-                "replace": [
-                    [
-                        "载",
-                        "截"
-                    ]
+                    "拦[截载]战" //OCR 可能把「截」读成「载」
                 ]
             }
         },

@@ -46,7 +46,8 @@
                 ],
                 "expected": [
                     ".*活动关.*"
-                ]
+                ],
+                "only_rec": true //避免 batch OCR 降采样后 det 读不出小字
             }
         }
     },
@@ -104,8 +105,10 @@
     },
     "SmallEventEventStageQuickBattleFlow": {
         "desc": "小活动活动关卡页面快速战斗流程",
+        // 当前活动扫荡路由：切换主题时只替换 next；模板与偏移保存在 Themes/ 的主题节点中。
         "next": [
-            "SmallEventClickStageRepeatable",
+            "SmallEventLittleWitchTrickClickStageNormalRepeatable",
+            "SmallEventLittleWitchTrickClickStageHardRepeatable",
             "SmallEventGoBack"
         ]
     },
@@ -162,8 +165,8 @@
                     604
                 ],
                 "template": [
-                    "SmallEvent/GreatVillainUnion/GreatVillainUnionStageNormal.png", //当前活动，随最新主题更新
-                    "SmallEvent/GreatVillainUnion/GreatVillainUnionStageHard.png"
+                    "SmallEvent/LittleWitchTrick/LittleWitchTrickStageNormal.png", //当前活动，随最新主题更新
+                    "SmallEvent/LittleWitchTrick/LittleWitchTrickStageHard.png"
                 ],
                 "order_by": "Vertical",
                 "index": -1
@@ -176,34 +179,6 @@
         "next": [
             "SmallEventEventStageBattlePage",
             "SmallEventEventStageQuickBattleFlow"
-        ]
-    },
-    "SmallEventClickStageRepeatable": {
-        "desc": "小活动关卡可扫荡点击",
-        "recognition": {
-            "type": "TemplateMatch",
-            "param": {
-                "roi": [
-                    314,
-                    103,
-                    661,
-                    604
-                ],
-                "template": [
-                    "SmallEvent/GreatVillainUnion/GreatVillainUnionStageNormalRepeatable.png", //当前活动，随最新主题更新
-                    "SmallEvent/GreatVillainUnion/GreatVillainUnionStageHardRepeatable.png"
-                ],
-                "order_by": "Vertical",
-                "index": -1
-            }
-        },
-        "action": {
-            "type": "Click"
-        },
-        "post_wait_freezes": 500,
-        "next": [
-            "SmallEventEventStageBattlePage",
-            "SmallEventGoBack"
         ]
     },
     "SmallEventBattleBlocked": {

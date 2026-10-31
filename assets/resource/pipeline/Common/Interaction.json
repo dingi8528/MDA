@@ -22,6 +22,7 @@
     },
     "CommonConfirmAction": {
         "desc": "操作确认",
+        "max_hit": 20,
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -317,9 +318,11 @@
         "timeout": 120000,
         "next": [
             "[JumpBack]CommonClosePage",
+            "[JumpBack]BattleClosePage",
             "[JumpBack]LoginConfirmServer",
             "[JumpBack]LoginConfirmDownload",
             "[JumpBack]LoginConfirmLogin",
+            "[JumpBack]DailyLoginRewardsFlow",
             "[JumpBack]CommonClickHomeButton",
             "[JumpBack]CommonSkipPlot",
             "[JumpBack]CommonCloseSale",
@@ -439,7 +442,8 @@
                 ],
                 "expected": [
                     "SKIP"
-                ]
+                ],
+                "only_rec": true //避免 batch OCR 降采样后 det 读不出小字
             }
         },
         "action": {
@@ -473,7 +477,10 @@
         },
         "post_wait_freezes": 500,
         "next": [
-            "CommonFreeStateFlow"
+            "[JumpBack]DailyLoginRewardsFlow", //登录后的签到页可能晚于铃铛图标加载完成
+            "CommonFreeStateFlow",
+            "CommonClickFreeState", //兜底
+            "[JumpBack]CommonCloseSale"
         ]
     },
     "CommonClickHall": {
@@ -499,9 +506,7 @@
     "CommonEnterArk": {
         "desc": "进入方舟",
         "next": [
-            "CommonArkEntered",
-            "CommonClickArk",
-            "[JumpBack]CommonReturnHall"
+            "SceneEnterArk"
         ]
     },
     "CommonArkEntered": {

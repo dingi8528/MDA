@@ -25,6 +25,9 @@
         "rate_limit": 500,
         "next": [
             "EquipmentRerollHeadDetailsEntered"
+        ],
+        "on_error": [
+            "EquipmentRerollDetailsPageFailed"
         ]
     },
     "EquipmentRerollHeadDetailsEntered": {
@@ -85,6 +88,9 @@
         "rate_limit": 500,
         "next": [
             "EquipmentRerollArmsDetailsEntered"
+        ],
+        "on_error": [
+            "EquipmentRerollDetailsPageFailed"
         ]
     },
     "EquipmentRerollArmsDetailsEntered": {
@@ -145,6 +151,9 @@
         "rate_limit": 500,
         "next": [
             "EquipmentRerollTorsoDetailsEntered"
+        ],
+        "on_error": [
+            "EquipmentRerollDetailsPageFailed"
         ]
     },
     "EquipmentRerollTorsoDetailsEntered": {
@@ -205,6 +214,9 @@
         "rate_limit": 500,
         "next": [
             "EquipmentRerollLegsDetailsEntered"
+        ],
+        "on_error": [
+            "EquipmentRerollDetailsPageFailed"
         ]
     },
     "EquipmentRerollLegsDetailsEntered": {
@@ -238,5 +250,20 @@
         "next": [
             "[Anchor]EquipmentRerollAfterOpenLegs"
         ]
+    },
+    "EquipmentRerollDetailsPageFailed": {
+        "desc": "点击装备后未进入详情页（next 超时），提示输入方式并显式失败（四个部位共用）",
+        "recognition": {
+            "type": "DirectHit"
+        },
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "EquipmentRerollFailAction",
+                "custom_action_param": {
+                    "reason": "details_page_not_opened"
+                }
+            }
+        }
     }
 }

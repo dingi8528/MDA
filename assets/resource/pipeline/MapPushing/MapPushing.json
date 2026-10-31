@@ -4,8 +4,9 @@
         "next": [
             "[JumpBack]BattleEntryFlow",
             "[JumpBack]CommonSkipPlot",
-            "[JumpBack]MapPushingClickMonster",
-            "[JumpBack]MapPushingClickPlate"
+            "[JumpBack]MapPushingOpenMinimap",
+            "[JumpBack]MapPushingClickPlate",
+            "[JumpBack]MapPushingClickMonster"
         ],
         "focus": {
             "Node.Action.Succeeded": "$focus.MapPushingFlow.Action.Succeeded"
@@ -16,71 +17,212 @@
         "recognition": {
             "type": "NeuralNetworkDetect",
             "param": {
-                "model": "MapPushing.onnx",
-                "labels": [
-                    "monster"
-                ]
+                "roi": [
+                    180,
+                    40,
+                    1080,
+                    610
+                ],
+                "expected": [
+                    0,
+                    1
+                ],
+                "model": "MapPushing.onnx"
             }
         }
     },
     "MapPushingClickMonster": {
-        "desc": "推图点击怪物",
+        "desc": "推图点击怪物后最多等待 3 秒小地图稳定，再优先判断战斗、剧情或机关；点击无效时重新选怪",
         "recognition": {
-            "type": "Custom",
+            "type": "And",
             "param": {
-                "custom_recognition": "CenterPriorityRecognition",
-                "custom_recognition_param": {
-                    "entry": "MapPushingClickMonsterRaw"
-                }
+                "all_of": [
+                    "MapPushingMinimapVisible",
+                    {
+                        "recognition": {
+                            "type": "Custom",
+                            "param": {
+                                "custom_recognition": "CenterPriorityRecognition",
+                                "custom_recognition_param": {
+                                    "entry": "MapPushingClickMonsterRaw",
+                                    "fallback": "fail"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "box_index": 1
             }
         },
+        "pre_delay": 0,
         "action": {
             "type": "Click"
         },
         "post_wait_freezes": {
-            "time": 500,
+            "time": 800,
             "target": [
-                448,
-                512,
-                385,
-                79
-            ]
-        }
+                20,
+                85,
+                122,
+                90
+            ],
+            "threshold": 0.98,
+            "rate_limit": 100,
+            "timeout": 3000
+        },
+        "next": [
+            "MapPushingTravelInterrupted",
+            "MapPushingClickPlate",
+            "MapPushingClickMonster"
+        ]
     },
     "MapPushingClickPlateRaw": {
         "desc": "推图机关原始识别",
         "recognition": {
             "type": "NeuralNetworkDetect",
             "param": {
-                "model": "MapPushing.onnx",
-                "labels": [
-                    "plate0"
-                ]
+                "roi": [
+                    180,
+                    40,
+                    1080,
+                    610
+                ],
+                "expected": [
+                    2
+                ],
+                "model": "MapPushing.onnx"
             }
         }
     },
     "MapPushingClickPlate": {
-        "desc": "推图点击机关",
+        "desc": "推图优先点击未开启机关，最多等待 3 秒小地图稳定；大范围漏检时补充中央近景识别",
         "recognition": {
-            "type": "Custom",
+            "type": "And",
             "param": {
-                "custom_recognition": "CenterPriorityRecognition",
-                "custom_recognition_param": {
-                    "entry": "MapPushingClickPlateRaw"
-                }
+                "all_of": [
+                    "MapPushingMinimapVisible",
+                    {
+                        "recognition": {
+                            "type": "Or",
+                            "param": {
+                                "any_of": [
+                                    {
+                                        "recognition": {
+                                            "type": "Custom",
+                                            "param": {
+                                                "custom_recognition": "CenterPriorityRecognition",
+                                                "custom_recognition_param": {
+                                                    "entry": "MapPushingClickPlateRaw",
+                                                    "fallback": "fail"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "recognition": {
+                                            "type": "Custom",
+                                            "param": {
+                                                "custom_recognition": "CenterPriorityRecognition",
+                                                "custom_recognition_param": {
+                                                    "entry": "MapPushingClickNearbyPlateRaw",
+                                                    "fallback": "fail"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "box_index": 1
             }
         },
         "action": {
             "type": "Click"
         },
         "post_wait_freezes": {
-            "time": 500,
+            "time": 800,
             "target": [
-                448,
-                512,
-                385,
-                79
-            ]
+                20,
+                85,
+                122,
+                90
+            ],
+            "threshold": 0.98,
+            "rate_limit": 100,
+            "timeout": 3000
+        }
+    },
+    "MapPushingClickNearbyPlateRaw": {
+        "desc": "推图中央近景未开启机关识别，避免大范围缩放后漏检脚下踏板",
+        "recognition": {
+            "type": "NeuralNetworkDetect",
+            "param": {
+                "roi": [
+                    360,
+                    200,
+                    550,
+                    400
+                ],
+                "expected": [
+                    2
+                ],
+                "model": "MapPushing.onnx"
+            }
+        }
+    },
+    "MapPushingTravelInterrupted": {
+        "desc": "战斗准备或剧情已出现，返回推图入口处理",
+        "recognition": {
+            "type": "Or",
+            "param": {
+                "any_of": [
+                    "BattleMainVisible",
+                    "CommonSkipPlot"
+                ]
+            }
+        }
+    },
+    "MapPushingOpenMinimap": {
+        "desc": "识别收起的小地图按钮并展开，确认展开后再选择怪物或机关",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    13,
+                    53,
+                    36,
+                    38
+                ],
+                "template": [
+                    "MapPushing/MinimapCollapsed.png"
+                ]
+            }
+        },
+        "action": {
+            "type": "Click"
+        },
+        "timeout": 5000,
+        "next": [
+            "MapPushingMinimapVisible"
+        ]
+    },
+    "MapPushingMinimapVisible": {
+        "desc": "确认小地图展开，避免等待区域落入动态场景背景",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    13,
+                    58,
+                    30,
+                    33
+                ],
+                "template": [
+                    "MapPushing/MinimapVisible.png"
+                ]
+            }
         }
     }
 }

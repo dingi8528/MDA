@@ -1,8 +1,8 @@
 {
     "OutpostMain": {
         "next": [
-            "HallEnterOutpost",
-            "[JumpBack]CommonReturnHall"
+            "OutpostTaskFlow",
+            "[JumpBack]SceneEnterOutpost"
         ]
     },
     "HallEnterOutpost": {
@@ -26,7 +26,8 @@
         },
         "next": [
             "OutpostTaskFlow",
-            "HallEnterOutpost"
+            "HallEnterOutpost",
+            "[JumpBack]CommonSkipPlot"
         ]
     },
     "OutpostTaskFlow": {

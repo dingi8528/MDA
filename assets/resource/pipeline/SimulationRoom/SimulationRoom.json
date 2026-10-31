@@ -1,8 +1,8 @@
 {
     "SimulationRoomMain": {
         "next": [
-            "SimulationRoomEnterMain",
-            "[JumpBack]CommonEnterArk"
+            "SimulationRoomCornerFlow",
+            "[JumpBack]SceneEnterSimulationRoom"
         ]
     },
     "SimulationRoomEnterMain": {
@@ -80,8 +80,8 @@
         "post_wait_freezes": {
             "time": 500,
             "target": [
-                580,
-                505,
+                578,
+                313,
                 125,
                 90
             ]
